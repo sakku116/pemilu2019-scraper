@@ -246,6 +246,7 @@ def getTableData(table: WebElement) -> list[dict]:
 
     return result
 
+
 def getTableDataCalonLegislatif(table: WebElement) -> list[dict]:
     result = []
     header_texts = []
@@ -277,6 +278,7 @@ def getTableDataCalonLegislatif(table: WebElement) -> list[dict]:
         result.append(t_payload)
 
     return result
+
 
 base_url = "https://pemilu2019.pusataplikasi.com/hasil-rekapitulasi/dpr-ri"
 driver.get(base_url)
@@ -357,14 +359,18 @@ logger.info(f"national_data: {json.dumps(national_data, indent=2)}")
 # logger.info(f"mapping: {json.dumps(mapping, indent=2)}")
 
 # get regency slugs
-for prov_slug in list(mapping.keys())[:5]:
+prov_slugs = list(mapping.keys())
+prov_slugs.reverse()
+for prov_slug in prov_slugs:
     driver.get(f"{base_url}{prov_slug.split('-')[0]}")
     content_rows = driver.find_elements(By.CSS_SELECTOR, "section.content div.row")
 
     logger.info(f"content rows: {len(content_rows)}")
 
     # ensure dirs
-    data_by_partai_dir = f"./result/rekapitulasi/dapil/{prov_slug.split('-')[1]}/data-by-partai"
+    data_by_partai_dir = (
+        f"./result/rekapitulasi/dapil/{prov_slug.split('-')[1]}/data-by-partai"
+    )
     dir = os.path.join(
         os.getcwd(),
         data_by_partai_dir,
@@ -382,9 +388,11 @@ for prov_slug in list(mapping.keys())[:5]:
         data_json_all_partai = []
         for partai_index, partai_section in enumerate(cards):
             table = partai_section.find_element(By.TAG_NAME, "table")
-            partai_name = partai_section.find_element(By.CSS_SELECTOR, ".card-title").text.strip()
+            partai_name = partai_section.find_element(
+                By.CSS_SELECTOR, ".card-title"
+            ).text.strip()
             try:
-                partai_name = ' '.join(partai_name.split(" ")[:-1])
+                partai_name = " ".join(partai_name.split(" ")[:-1])
             except Exception as e:
                 logger.warning(e)
                 partai_name = partai_name
@@ -424,10 +432,9 @@ for prov_slug in list(mapping.keys())[:5]:
 
             # get data
             prov_partai_data = getTableDataCalonLegislatif(table)
-            data_json_all_partai.append({
-                "partai": partai_name,
-                "data": prov_partai_data
-            })
+            data_json_all_partai.append(
+                {"partai": partai_name, "data": prov_partai_data}
+            )
             # logger.info(f"prov partai data: {json.dumps(prov_partai_data, indent=2)}")
             logger.info(f"prov partai data: {len(prov_partai_data)}")
 
@@ -436,13 +443,18 @@ for prov_slug in list(mapping.keys())[:5]:
             df.to_csv(f"{data_by_partai_dir}/{partai_name}.csv", index=False)
 
         # save json data all partai
-        json.dump(data_json_all_partai, open(f"{data_by_partai_dir}/data-all-partai.json", "w"))
+        json.dump(
+            data_json_all_partai,
+            open(f"{data_by_partai_dir}/data-all-partai.json", "w"),
+        )
 
-    # logger.info(f"mapping: {json.dumps(mapping, indent=2)}")
+    logger.info(f"mapping: {json.dumps(mapping, indent=2)}")
 
 # get district slugs
-for prov_slug in list(mapping.keys())[:5]:
-    for regency_slug in list(mapping[prov_slug].keys())[:5]:
+for prov_slug in list(mapping.keys()):
+    regency_slugs = list(mapping[prov_slug].keys())
+    regency_slugs.reverse()
+    for regency_slug in regency_slugs:
         driver.get(f"{base_url}{prov_slug.split('-')[0]}{regency_slug.split('-')[0]}")
         content_rows = driver.find_elements(By.CSS_SELECTOR, "section.content div.row")
 
@@ -469,9 +481,11 @@ for prov_slug in list(mapping.keys())[:5]:
             data_json_all_partai = []
             for partai_index, partai_section in enumerate(cards):
                 table = partai_section.find_element(By.TAG_NAME, "table")
-                partai_name = partai_section.find_element(By.CSS_SELECTOR, ".card-title").text.strip()
+                partai_name = partai_section.find_element(
+                    By.CSS_SELECTOR, ".card-title"
+                ).text.strip()
                 try:
-                    partai_name = ' '.join(partai_name.split(" ")[:-1])
+                    partai_name = " ".join(partai_name.split(" ")[:-1])
                 except Exception as e:
                     logger.warning(e)
                     partai_name = partai_name
@@ -497,7 +511,9 @@ for prov_slug in list(mapping.keys())[:5]:
                         mapping[prov_slug][regency_slug][
                             f"/{district_code}-{district_name}"
                         ] = {}
-                        slug = f"{prov_slug}{regency_slug}/{district_code}-{district_name}"
+                        slug = (
+                            f"{prov_slug}{regency_slug}/{district_code}-{district_name}"
+                        )
                         slug_list.append(slug)
                         logger.info(f"slug: {slug}")
 
@@ -511,10 +527,9 @@ for prov_slug in list(mapping.keys())[:5]:
 
                 # get data
                 regency_partai_data = getTableDataCalonLegislatif(table)
-                data_json_all_partai.append({
-                    "partai": partai_name,
-                    "data": regency_partai_data
-                })
+                data_json_all_partai.append(
+                    {"partai": partai_name, "data": regency_partai_data}
+                )
                 # logger.info(
                 #     f"regency partai data: {json.dumps(regency_partai_data, indent=2)}"
                 # )
@@ -525,14 +540,19 @@ for prov_slug in list(mapping.keys())[:5]:
                 df.to_csv(f"{data_by_partai_dir}/{partai_name}.csv", index=False)
 
             # save json data all partai
-            json.dump(data_json_all_partai, open(f"{data_by_partai_dir}/data-all-partai.json", "w"))
+            json.dump(
+                data_json_all_partai,
+                open(f"{data_by_partai_dir}/data-all-partai.json", "w"),
+            )
 
-        # logger.info(f"mapping: {json.dumps(mapping, indent=2)}")
+        logger.info(f"mapping: {json.dumps(mapping, indent=2)}")
 
 # get village slugs
-for prov_slug in list(mapping.keys())[:5]:
-    for regency_slug in list(mapping[prov_slug].keys())[:5]:
-        for district_slug in list(mapping[prov_slug][regency_slug].keys())[:5]:
+for prov_slug in list(mapping.keys()):
+    for regency_slug in list(mapping[prov_slug].keys()):
+        district_slugs = list(mapping[prov_slug][regency_slug].keys())
+        district_slugs.reverse()
+        for district_slug in district_slugs:
             driver.get(
                 f"{base_url}{prov_slug.split('-')[0]}{regency_slug.split('-')[0]}{district_slug.split('-')[0]}"
             )
@@ -563,9 +583,11 @@ for prov_slug in list(mapping.keys())[:5]:
                 data_json_all_partai = []
                 for partai_index, partai_section in enumerate(cards):
                     table = partai_section.find_element(By.TAG_NAME, "table")
-                    partai_name = partai_section.find_element(By.CSS_SELECTOR, ".card-title").text.strip()
+                    partai_name = partai_section.find_element(
+                        By.CSS_SELECTOR, ".card-title"
+                    ).text.strip()
                     try:
-                        partai_name = ' '.join(partai_name.split(" ")[:-1])
+                        partai_name = " ".join(partai_name.split(" ")[:-1])
                     except Exception as e:
                         logger.warning(e)
                         partai_name = partai_name
@@ -591,9 +613,7 @@ for prov_slug in list(mapping.keys())[:5]:
                             mapping[prov_slug][regency_slug][district_slug][
                                 f"/{village_code}-{village_name}"
                             ] = {}
-                            slug = (
-                                f"{prov_slug}{district_slug}/{village_code}-{village_name}"
-                            )
+                            slug = f"{prov_slug}{district_slug}/{village_code}-{village_name}"
                             slug_list.append(slug)
                             logger.info(f"slug: {slug}")
 
@@ -607,10 +627,9 @@ for prov_slug in list(mapping.keys())[:5]:
 
                     # get data csv per partai
                     district_partai_data = getTableData(table)
-                    data_json_all_partai.append({
-                        "partai": partai_name,
-                        "data": district_partai_data
-                    })
+                    data_json_all_partai.append(
+                        {"partai": partai_name, "data": district_partai_data}
+                    )
                     # logger.info(
                     #     f"district partai data: {json.dumps(district_partai_data, indent=2)}"
                     # )
@@ -621,17 +640,22 @@ for prov_slug in list(mapping.keys())[:5]:
                     df.to_csv(f"{data_by_partai_dir}/{partai_name}.csv", index=False)
 
                 # save json data all partai
-                json.dump(data_json_all_partai, open(f"{data_by_partai_dir}/data-all-partai.json", "w"))
+                json.dump(
+                    data_json_all_partai,
+                    open(f"{data_by_partai_dir}/data-all-partai.json", "w"),
+                )
 
-            # logger.info(f"mapping: {json.dumps(mapping, indent=2)}")
+            logger.info(f"mapping: {json.dumps(mapping, indent=2)}")
 
 # get village data
-for prov_slug in list(mapping.keys())[:5]:
-    for regency_slug in list(mapping[prov_slug].keys())[:5]:
-        for district_slug in list(mapping[prov_slug][regency_slug].keys())[:5]:
-            for village_slug in list(
+for prov_slug in list(mapping.keys()):
+    for regency_slug in list(mapping[prov_slug].keys()):
+        for district_slug in list(mapping[prov_slug][regency_slug].keys()):
+            village_slugs = list(
                 mapping[prov_slug][regency_slug][district_slug].keys()
-            )[:5]:
+            )
+            village_slugs.reverse()
+            for village_slug in village_slugs:
                 driver.get(
                     f"{base_url}{prov_slug.split('-')[0]}{regency_slug.split('-')[0]}{district_slug.split('-')[0]}{village_slug.split('-')[0]}"
                 )
@@ -648,6 +672,8 @@ for prov_slug in list(mapping.keys())[:5]:
                 )
                 if not os.path.exists(dir):
                     os.makedirs(dir)
+                else:
+                    continue
 
                 for row in content_rows:
                     cards = row.find_elements(
@@ -661,18 +687,19 @@ for prov_slug in list(mapping.keys())[:5]:
                     data_json_all_partai = []
                     for partai_section in cards:
                         table = partai_section.find_element(By.TAG_NAME, "table")
-                        partai_name = partai_section.find_element(By.CSS_SELECTOR, ".card-title").text.strip()
+                        partai_name = partai_section.find_element(
+                            By.CSS_SELECTOR, ".card-title"
+                        ).text.strip()
                         try:
-                            partai_name = ' '.join(partai_name.split(" ")[:-1])
+                            partai_name = " ".join(partai_name.split(" ")[:-1])
                         except Exception as e:
                             logger.warning(e)
                             partai_name = partai_name
 
                         village_partai_data = getTableDataCalonLegislatif(table)
-                        data_json_all_partai.append({
-                            "partai": partai_name,
-                            "data": village_partai_data
-                        })
+                        data_json_all_partai.append(
+                            {"partai": partai_name, "data": village_partai_data}
+                        )
                         # logger.info(
                         #     f"village partai data: {json.dumps(village_partai_data, indent=2)}"
                         # )
@@ -680,10 +707,12 @@ for prov_slug in list(mapping.keys())[:5]:
 
                         # save data csv per partai
                         df = pd.DataFrame(district_partai_data)
-                        df.to_csv(f"{data_by_partai_dir}/{partai_name}.csv", index=False)
+                        df.to_csv(
+                            f"{data_by_partai_dir}/{partai_name}.csv", index=False
+                        )
 
                     # save json data all partai
-                    json.dump(data_json_all_partai, open(f"{data_by_partai_dir}/data-all-partai.json", "w"))
-
-
-
+                    json.dump(
+                        data_json_all_partai,
+                        open(f"{data_by_partai_dir}/data-all-partai.json", "w"),
+                    )
